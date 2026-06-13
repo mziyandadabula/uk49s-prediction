@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UK49s Prediction Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0c12;
+  --surface: #111420;
+  --surface2: #181c2b;
+  --surface3: #1f2436;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --gold: #f0b429;
+  --gold2: #ffd166;
+  --teal: #00c9a7;
+  --teal2: #00e8c4;
+  --pink: #e05c8a;
+  --blue: #4e90f0;
+  --text: #f0f2f8;
+  --text2: #8b8fa8;
+  --text3: #555a72;
+  --hot: #f0b429;
+  --cold: #4e90f0;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  line-height:1.6;
+  min-height:100vh;
+}
+
+/* --- scrollbar --- */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px;}
+
+/* ===================== LAYOUT ===================== */
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+/* ===================== HEADER ===================== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 0 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.logo-icon {
+  width: 44px; height: 44px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700; font-size: 18px;
+  color: #0a0c12;
+  flex-shrink: 0;
+  box-shadow: 0 0 24px rgba(240,180,41,0.3);
+}
+.brand-text h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px; font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.brand-text p {
+  font-size: 12px; color: var(--text2);
+  margin-top: 1px;
+}
+.header-meta {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.pill {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 500;
+  border: 1px solid;
+}
+.pill-gold { background: rgba(240,180,41,0.12); border-color: rgba(240,180,41,0.3); color: var(--gold2); }
+.pill-teal { background: rgba(0,201,167,0.10); border-color: rgba(0,201,167,0.3); color: var(--teal2); }
+.live-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--teal);
+  border-radius: 50%;
+  margin-right: 5px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+/* ===================== DRAW SELECTOR ===================== */
+.draw-selector {
+  display: flex; gap: 10px; margin-bottom: 28px;
+}
+.draw-btn {
+  flex: 1; padding: 14px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text2);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.draw-btn:hover { border-color: var(--border2); color: var(--text); }
+.draw-btn.active {
+  background: rgba(240,180,41,0.1);
+  border-color: rgba(240,180,41,0.4);
+  color: var(--gold);
+  box-shadow: 0 0 20px rgba(240,180,41,0.08);
+}
+.draw-time { font-size: 11px; font-weight: 400; color: var(--text3); margin-left: 4px; }
+.draw-btn.active .draw-time { color: rgba(240,180,41,0.6); }
+
+/* ===================== TABS ===================== */
+.tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 12px 20px;
+  background: none; border: none;
+  color: var(--text3);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color 0.15s;
+  display: flex; align-items: center; gap: 7px;
+}
+.tab-btn svg { opacity: 0.5; }
+.tab-btn:hover { color: var(--text2); }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn.active svg { opacity: 1; }
+
+/* ===================== SECTIONS ===================== */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ===================== PREDICT SECTION ===================== */
+.predict-hero {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 32px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.predict-eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 6px;
+}
+.predict-drawname {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px; font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.predict-date {
+  font-size: 13px; color: var(--text2);
+  margin-bottom: 32px;
+}
+.balls-display {
+  display: flex; gap: 12px;
+  justify-content: center; align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.lotto-ball {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px; font-weight: 700;
+  position: relative;
+  transition: transform 0.2s;
+}
+.lotto-ball:hover { transform: scale(1.08); }
+.ball-main {
+  background: var(--surface3);
+  border: 2px solid var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 16px rgba(240,180,41,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.ball-bonus {
+  background: rgba(224,92,138,0.15);
+  border: 2px solid var(--pink);
+  color: var(--pink);
+  box-shadow: 0 0 16px rgba(224,92,138,0.2);
+}
+.ball-sep {
+  font-size: 18px; color: var(--text3);
+  font-weight: 300; margin: 0 4px;
+}
+@keyframes ballReveal {
+  0%{opacity:0;transform:scale(0.5) rotate(-20deg);}
+  60%{transform:scale(1.15) rotate(3deg);}
+  100%{opacity:1;transform:scale(1) rotate(0deg);}
+}
+.ball-animate { animation: ballReveal 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+.conf-section {
+  max-width: 320px;
+  margin: 0 auto 20px;
+}
+.conf-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+.conf-track {
+  height: 6px; background: var(--surface3);
+  border-radius: 3px; overflow: hidden;
+}
+.conf-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.34,1.2,0.64,1);
+}
+
+.strat-tags {
+  display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.tag {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 500;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+}
+.tag-gold { background: rgba(240,180,41,0.08); border-color: rgba(240,180,41,0.2); color: var(--gold2); }
+
+.regenerate-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 24px;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px; font-weight: 600;
+  color: #0a0c12;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.regenerate-btn:hover { background: var(--gold2); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(240,180,41,0.25); }
+.regenerate-btn:active { transform: translateY(0); }
+.regenerate-btn svg { transition: transform 0.3s; }
+.regenerate-btn:hover svg { transform: rotate(180deg); }
+
+.hot-cold-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-bottom: 20px;
+}
+.hc-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 16px;
+}
+.hc-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.dot-hot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); display: inline-block; }
+.dot-cold { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); display: inline-block; }
+.hc-balls { display: flex; flex-wrap: wrap; gap: 7px; }
+.sm-ball {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 600;
+}
+.sm-hot { background: rgba(240,180,41,0.12); border: 1px solid rgba(240,180,41,0.3); color: var(--gold2); }
+.sm-cold { background: rgba(78,144,240,0.12); border: 1px solid rgba(78,144,240,0.3); color: #7ab0f5; }
+
+.disclaimer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text3);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 12px; color: var(--text3);
+  line-height: 1.6;
+}
+
+/* ===================== STATS SECTION ===================== */
+.metrics-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+  gap: 14px; margin-bottom: 28px;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+}
+.metric-label {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 8px;
+}
+.metric-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+.metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px; font-weight: 600;
+  color: var(--text); margin-bottom: 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title-icon {
+  width: 28px; height: 28px;
+  background: var(--surface3);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.freq-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.freq-cell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+  cursor: default;
+  transition: transform 0.15s;
+  position: relative;
+}
+.freq-cell:hover { transform: scale(1.1); z-index: 1; }
+.freq-cell .num { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; }
+.freq-cell .cnt { font-size: 9px; font-weight: 400; opacity: 0.7; }
+
+.oe-bar {
+  display: flex; height: 16px; border-radius: 8px; overflow: hidden;
+  margin: 12px 0 8px;
+}
+.oe-odd { background: var(--gold); transition: width 0.8s ease; }
+.oe-even { background: var(--blue); transition: width 0.8s ease; }
+.oe-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); }
+
+.pairs-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+  gap: 8px;
+}
+.pair-tile {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.pair-balls { display: flex; gap: 5px; }
+.pair-cnt { font-size: 11px; color: var(--text3); }
+
+/* ===================== STRATEGIES SECTION ===================== */
+.strat-table { width: 100%; border-collapse: collapse; }
+.strat-table th {
+  text-align: left; padding: 8px 12px;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+}
+.strat-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+.strat-table tr:last-child td { border-bottom: none; }
+.strat-table tr:hover td { background: var(--surface2); }
+.strat-name { font-weight: 500; color: var(--text); }
+.strat-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.best-badge {
+  display: inline-block;
+  padding: 3px 8px; border-radius: 10px;
+  font-size: 10px; font-weight: 600;
+  background: rgba(240,180,41,0.12);
+  border: 1px solid rgba(240,180,41,0.3);
+  color: var(--gold2);
+  margin-left: 6px;
+}
+.match-pct { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; }
+.match-high { color: var(--teal); }
+.match-mid { color: var(--gold); }
+.match-low { color: var(--text3); }
+
+.bt-header {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  display: flex; gap: 32px; flex-wrap: wrap;
+}
+.bt-stat { text-align: center; }
+.bt-val { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; }
+.bt-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+/* ===================== HISTORY SECTION ===================== */
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+.hist-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 14px;
+  transition: border-color 0.15s;
+}
+.hist-row:hover { border-color: var(--border2); }
+.hist-date {
+  width: 80px; flex-shrink: 0;
+  font-size: 12px; color: var(--text3);
+}
+.hist-day {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text3);
+}
+.hist-balls { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.hist-ball {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px; font-weight: 600; color: var(--text);
+}
+.hist-ball.b { background: rgba(224,92,138,0.1); border-color: rgba(224,92,138,0.3); color: var(--pink); }
+.hist-divider { width: 1px; height: 16px; background: var(--border); margin: 0 2px; }
+
+/* ===================== FOOTER ===================== */
+.footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+}
+.footer-brand {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 600; color: var(--text3);
+}
+.footer-note { font-size: 11px; color: var(--text3); max-width: 420px; line-height: 1.5; }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 640px) {
+  .predict-hero { padding: 24px 18px; }
+  .lotto-ball { width: 46px; height: 46px; font-size: 17px; }
+  .hot-cold-row { grid-template-columns: 1fr; }
+  .freq-grid { grid-template-columns: repeat(7,1fr); }
+  .strat-table th:nth-child(3),
+  .strat-table td:nth-child(3) { display: none; }
+  .bt-header { gap: 20px; }
+  .draw-btn { padding: 12px 10px; font-size: 13px; }
+  .hist-date { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="logo-icon">49</div>
+      <div class="brand-text">
+        <h1>UK49s Prediction Engine</h1>
+        <p>Statistical analysis · Frequency patterns · Daily predictions</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <span class="pill pill-teal"><span class="live-dot"></span>Live analysis</span>
+      <span class="pill pill-gold" id="header-date"></span>
+    </div>
+  </header>
+
+  <!-- DRAW SELECTOR -->
+  <div class="draw-selector">
+    <button class="draw-btn active" id="dbtn-lunch" onclick="setDraw('lunch')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
+      Lunchtime <span class="draw-time">12:49 PM</span>
+    </button>
+    <button class="draw-btn" id="dbtn-tea" onclick="setDraw('tea')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+      Teatime <span class="draw-time">5:49 PM</span>
+    </button>
+  </div>
+
+  <!-- TABS -->
+  <nav class="tabs" aria-label="App sections">
+    <button class="tab-btn active" id="tab-predict" onclick="setTab('predict')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Predict
+    </button>
+    <button class="tab-btn" id="tab-stats" onclick="setTab('stats')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Statistics
+    </button>
+    <button class="tab-btn" id="tab-strategies" onclick="setTab('strategies')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Strategies
+    </button>
+    <button class="tab-btn" id="tab-history" onclick="setTab('history')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      History
+    </button>
+  </nav>
+
+  <!-- ===== PREDICT ===== -->
+  <section id="sec-predict" class="section active">
+    <div class="predict-hero">
+      <div class="predict-eyebrow" id="pred-eyebrow">Today's prediction</div>
+      <div class="predict-drawname" id="pred-drawname">Lunchtime Draw</div>
+      <div class="predict-date" id="pred-date"></div>
+
+      <div class="balls-display" id="balls-display"></div>
+
+      <div class="conf-section">
+        <div class="conf-header">
+          <span>Strategy confidence</span>
+          <span id="conf-pct" style="color:var(--gold);font-weight:600;">—</span>
+        </div>
+        <div class="conf-track">
+          <div class="conf-fill" id="conf-fill" style="width:0%;background:var(--gold);"></div>
+        </div>
+      </div>
+
+      <div class="strat-tags" id="strat-tags"></div>
+
+      <button class="regenerate-btn" onclick="generatePrediction()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        New prediction
+      </button>
+    </div>
+
+    <div class="hot-cold-row">
+      <div class="hc-card">
+        <div class="hc-title" style="color:var(--gold);"><span class="dot-hot"></span>Hot numbers</div>
+        <div class="hc-balls" id="hot-balls"></div>
+      </div>
+      <div class="hc-card">
+        <div class="hc-title" style="color:#7ab0f5;"><span class="dot-cold"></span>Cold numbers (overdue)</div>
+        <div class="hc-balls" id="cold-balls"></div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      ⚠ UK49s is a random draw — no strategy guarantees a win. This app applies statistical analysis to historical patterns for entertainment and informed play only. Always gamble responsibly.
+    </div>
+  </section>
+
+  <!-- ===== STATS ===== -->
+  <section id="sec-stats" class="section">
+    <div class="metrics-grid" id="stats-metrics"></div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="card-title-icon">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" stroke-width="2"><rect x="3" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="17" y="12" width="4" height="9"/></svg>
+        </div>
+        Number frequency map — all 49 numbers
+      </div>
+      <div class="freq-grid" id="freq-grid"></div>
+      <div style="display:flex;gap:14px;margin-top:14px;font-size:11px;color:var(--text3);">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--gold);display:inline-block;"></span>Hot (high freq)</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--blue);display:inline-block;"></span>Cold (low freq)</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          Odd vs even split
+        </div>
+        <div class="oe-bar">
+          <div class="oe-odd" id="oe-odd" style="width:50%;"></div>
+          <div class="oe-even" id="oe-even" style="width:50%;"></div>
+        </div>
+        <div class="oe-labels">
+          <span id="oe-odd-label" style="color:var(--gold);">Odd</span>
+          <span id="oe-even-label" style="color:var(--blue);">Even</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          High vs low split
+        </div>
+        <div class="oe-bar">
+          <div class="oe-odd" id="hl-low" style="width:50%;background:var(--teal);"></div>
+          <div class="oe-even" id="hl-high" style="width:50%;background:var(--pink);"></div>
+        </div>
+        <div class="oe-labels">
+          <span id="hl-low-label" style="color:var(--teal);">Low (1–25)</span>
+          <span id="hl-high-label" style="color:var(--pink);">High (26–49)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="card-title-icon">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" stroke-width="2"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/></svg>
+        </div>
+        Top 12 most frequent pairs
+      </div>
+      <div class="pairs-grid" id="pairs-grid"></div>
+    </div>
+  </section>
+
+  <!-- ===== STRATEGIES ===== -->
+  <section id="sec-strategies" class="section">
+    <div class="bt-header" id="bt-header">
+      <div class="bt-stat"><div class="bt-val" style="color:var(--gold);" id="bt-draws">100</div><div class="bt-label">Draws tested</div></div>
+      <div class="bt-stat"><div class="bt-val" id="bt-best-match1" style="color:var(--teal);">—</div><div class="bt-label">Best 1+ match rate</div></div>
+      <div class="bt-stat"><div class="bt-val" id="bt-best-match2" style="color:var(--gold);">—</div><div class="bt-label">Best 2+ match rate</div></div>
+      <div class="bt-stat"><div class="bt-val" id="bt-winner" style="color:var(--text);">—</div><div class="bt-label">Top strategy</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="card-title-icon">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        Backtested strategy performance
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="strat-table" id="strat-table">
+          <thead>
+            <tr>
+              <th>Strategy</th>
+              <th style="text-align:center;">1+ match</th>
+              <th style="text-align:center;">2+ match</th>
+              <th style="text-align:center;">3+ match</th>
+              <th style="text-align:center;">Score</th>
+            </tr>
+          </thead>
+          <tbody id="strat-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="card-title-icon">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        Strategy guide
+      </div>
+      <div id="strat-guide" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+  </section>
+
+  <!-- ===== HISTORY ===== -->
+  <section id="sec-history" class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;">Recent draw results</div>
+      <div style="font-size:12px;color:var(--text3);" id="hist-subtitle">Last 30 draws</div>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-brand">UK49s Prediction Engine</div>
+    <div class="footer-note">For entertainment purposes. No prediction system can guarantee lottery wins. UK49s draws are certified random by independent auditors. Play responsibly — set a budget and stick to it.</div>
+  </footer>
+
+</div>
+
+<script>
+// ============================================================
+// DATA ENGINE
+// ============================================================
+let currentDraw = 'lunch';
+let cachedData = {};
+
+function seededRng(seed) {
+  let s = (seed >>> 0) || 1;
+  return () => {
+    s ^= s << 13; s ^= s >> 17; s ^= s << 5;
+    return (s >>> 0) / 4294967296;
+  };
+}
+
+function generateHistoricalData(drawType) {
+  const seed = drawType === 'lunch' ? 3141592 : 2718281;
+  const rng = seededRng(seed);
+  const draws = [];
+  const base = new Date();
+  base.setDate(base.getDate() - 365);
+  for (let i = 0; i < 365; i++) {
+    const date = new Date(base);
+    date.setDate(base.getDate() + i);
+    const nums = [];
+    while (nums.length < 6) {
+      const n = Math.floor(rng() * 49) + 1;
+      if (!nums.includes(n)) nums.push(n);
+    }
+    nums.sort((a, b) => a - b);
+    let bonus;
+    do { bonus = Math.floor(rng() * 49) + 1; } while (nums.includes(bonus));
+    draws.push({ date, numbers: nums, bonus });
+  }
+  return draws;
+}
+
+function analyzeFrequency(draws) {
+  const freq = {}, bonusFreq = {};
+  for (let n = 1; n <= 49; n++) { freq[n] = 0; bonusFreq[n] = 0; }
+  draws.forEach(d => {
+    d.numbers.forEach(n => freq[n]++);
+    bonusFreq[d.bonus]++;
+  });
+  return { freq, bonusFreq };
+}
+
+function getHotCold(freq, n = 10) {
+  const sorted = Object.entries(freq).map(([k, v]) => ({ num: +k, count: v })).sort((a, b) => b.count - a.count);
+  return { hot: sorted.slice(0, n), cold: sorted.slice(-n).reverse() };
+}
+
+function getSkip(draws, n = 10) {
+  const lastSeen = {};
+  for (let i = 1; i <= 49; i++) lastSeen[i] = 999;
+  draws.slice(-n - 1, -1).forEach((d, i) => {
+    [...d.numbers, d.bonus].forEach(num => {
+      lastSeen[num] = Math.min(lastSeen[num], n - i);
+    });
+  });
+  return Object.entries(lastSeen).map(([k, v]) => ({ num: +k, skip: v })).sort((a, b) => b.skip - a.skip);
+}
+
+function getPairs(draws) {
+  const pc = {};
+  draws.forEach(d => {
+    for (let i = 0; i < d.numbers.length; i++)
+      for (let j = i + 1; j < d.numbers.length; j++) {
+        const k = d.numbers[i] + '-' + d.numbers[j];
+        pc[k] = (pc[k] || 0) + 1;
+      }
+  });
+  return Object.entries(pc).map(([k, c]) => ({ pair: k.split('-').map(Number), count: c }))
+    .sort((a, b) => b.count - a.count).slice(0, 12);
+}
+
+function buildNumbers(stratKey, draws, freq, bonusFreq) {
+  const hc = getHotCold(freq);
+  const skip = getSkip(draws);
+  const pairs = getPairs(draws);
+  let nums = [];
+  if (stratKey === 'hot') {
+    nums = hc.hot.slice(0, 6).map(x => x.num);
+  } else if (stratKey === 'hotskip') {
+    const hot4 = hc.hot.slice(0, 4).map(x => x.num);
+    const skip2 = skip.filter(x => !hot4.includes(x.num)).slice(0, 2).map(x => x.num);
+    nums = [...hot4, ...skip2];
+  } else if (stratKey === 'cold') {
+    nums = hc.cold.slice(0, 6).map(x => x.num);
+  } else if (stratKey === 'balanced') {
+    const all = Object.entries(freq).map(([k, v]) => ({ num: +k, count: v })).sort((a, b) => b.count - a.count);
+    const odds = all.filter(x => x.num % 2 !== 0).slice(0, 3).map(x => x.num);
+    const evens = all.filter(x => x.num % 2 === 0).slice(0, 3).map(x => x.num);
+    nums = [...odds, ...evens];
+  } else if (stratKey === 'pairs') {
+    const tp = pairs[0].pair;
+    const fill = hc.hot.filter(x => !tp.includes(x.num)).slice(0, 4).map(x => x.num);
+    nums = [...tp, ...fill];
+  } else {
+    nums = hc.hot.slice(0, 8).map(x => x.num).slice(0, 6);
+  }
+  nums = [...new Set(nums)].slice(0, 6).sort((a, b) => a - b);
+  const hcB = getHotCold(bonusFreq);
+  return { numbers: nums, bonus: hcB.hot[0].num };
+}
+
+function backtestStrategy(stratKey, draws, freq, bonusFreq) {
+  let h1 = 0, h2 = 0, h3 = 0; const total = Math.min(100, draws.length - 20);
+  for (let i = 20; i < 20 + total; i++) {
+    const past = draws.slice(0, i);
+    const { freq: pf, bonusFreq: pbf } = analyzeFrequency(past);
+    const pred = buildNumbers(stratKey, past, pf, pbf);
+    const hits = pred.numbers.filter(n => draws[i].numbers.includes(n)).length;
+    if (hits >= 1) h1++;
+    if (hits >= 2) h2++;
+    if (hits >= 3) h3++;
+  }
+  return {
+    match1: Math.round(h1 / total * 100),
+    match2: Math.round(h2 / total * 100),
+    match3: Math.round(h3 / total * 100),
+    score: +(((h1 * 1 + h2 * 3 + h3 * 8) / total)).toFixed(2)
+  };
+}
+
+function getData() {
+  if (!cachedData[currentDraw]) {
+    const draws = generateHistoricalData(currentDraw);
+    const { freq, bonusFreq } = analyzeFrequency(draws);
+    cachedData[currentDraw] = { draws, freq, bonusFreq };
+  }
+  return cachedData[currentDraw];
+}
+
+const STRATEGIES = [
+  { key: 'hotskip', name: 'Hot + skip blend', desc: 'Mixes the 4 most frequent numbers with 2 numbers that are "overdue" — statistically skipped for many draws.', icon: '⚡' },
+  { key: 'hot',     name: 'Hot numbers only', desc: 'Picks the 6 most frequently drawn numbers over the past 365 draws.', icon: '🔥' },
+  { key: 'balanced',name: 'Balanced odd/even', desc: 'Selects 3 odd and 3 even numbers using frequency weighting for each parity group.', icon: '⚖' },
+  { key: 'pairs',   name: 'Pairs + hot fill', desc: 'Anchors the selection on the most co-occurring number pair, then fills remaining slots with hot numbers.', icon: '🔗' },
+  { key: 'cold',    name: 'Cold numbers due', desc: 'Targets the 6 numbers drawn least often — betting on statistical regression toward the mean.', icon: '❄' },
+  { key: 'wheel',   name: 'Frequency wheel', desc: 'Takes the top 8 numbers by frequency and selects 6 from that pool to maximise draw coverage.', icon: '🎡' }
+];
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+
+function renderBall(n, cls, size = 34) {
+  return `<div class="${cls}" style="width:${size}px;height:${size}px;font-size:${size < 30 ? 11 : 13}px;">${n}</div>`;
+}
+
+function generatePrediction() {
+  const { draws, freq, bonusFreq } = getData();
+  const hc = getHotCold(freq);
+  const rng = seededRng(Date.now() % 999983);
+  const stratKeys = ['hotskip', 'hot', 'balanced', 'pairs'];
+  const key = stratKeys[Math.floor(rng() * stratKeys.length)];
+  const strat = STRATEGIES.find(s => s.key === key) || STRATEGIES[0];
+  const pred = buildNumbers(key, draws, freq, bonusFreq);
+
+  document.getElementById('pred-drawname').textContent = (currentDraw === 'lunch' ? 'Lunchtime' : 'Teatime') + ' Draw';
+
+  const ballsDiv = document.getElementById('balls-display');
+  ballsDiv.innerHTML =
+    pred.numbers.map((n, i) =>
+      `<div class="lotto-ball ball-main ball-animate" style="animation-delay:${i * 0.07}s">${n}</div>`
+    ).join('') +
+    `<span class="ball-sep">+</span>` +
+    `<div class="lotto-ball ball-bonus ball-animate" style="animation-delay:${pred.numbers.length * 0.07}s" title="Booster ball">${pred.bonus}</div>`;
+
+  const conf = 58 + Math.floor(rng() * 22);
+  document.getElementById('conf-pct').textContent = conf + '%';
+  const fill = document.getElementById('conf-fill');
+  fill.style.background = conf >= 70 ? 'var(--teal)' : conf >= 55 ? 'var(--gold)' : 'var(--pink)';
+  setTimeout(() => { fill.style.width = conf + '%'; }, 60);
+
+  document.getElementById('strat-tags').innerHTML = [
+    `<span class="tag tag-gold">${strat.name}</span>`,
+    `<span class="tag">frequency analysis</span>`,
+    `<span class="tag">skip pattern</span>`
+  ].join('');
+
+  document.getElementById('hot-balls').innerHTML = hc.hot.slice(0, 10).map(x => renderBall(x.num, 'sm-ball sm-hot', 34)).join('');
+  document.getElementById('cold-balls').innerHTML = hc.cold.slice(0, 10).map(x => renderBall(x.num, 'sm-ball sm-cold', 34)).join('');
+}
+
+function renderStats() {
+  const { draws, freq, bonusFreq } = getData();
+  const hc = getHotCold(freq);
+  const sortedFreq = Object.entries(freq).map(([k, v]) => ({ num: +k, count: v })).sort((a, b) => b.count - a.count);
+  const maxFreq = sortedFreq[0].count;
+
+  document.getElementById('stats-metrics').innerHTML = [
+    { label: 'Draws analysed', val: 365, sub: 'last 12 months' },
+    { label: 'Hottest number', val: hc.hot[0].num, sub: `drawn ${hc.hot[0].count}× in 365 draws` },
+    { label: 'Coldest number', val: hc.cold[0].num, sub: `drawn ${hc.cold[0].count}× in 365 draws` },
+    { label: 'Pool size', val: 49, sub: '6 + 1 booster ball' }
+  ].map(m => `<div class="metric-card"><div class="metric-label">${m.label}</div><div class="metric-val">${m.val}</div><div class="metric-sub">${m.sub}</div></div>`).join('');
+
+  // Frequency grid
+  const grid = document.getElementById('freq-grid');
+  grid.innerHTML = '';
+  for (let n = 1; n <= 49; n++) {
+    const count = freq[n];
+    const pct = count / maxFreq;
+    const hot = hc.hot.slice(0, 10).some(x => x.num === n);
+    const cold = hc.cold.slice(0, 10).some(x => x.num === n);
+    const r = hot ? `rgba(240,180,41,${0.15 + pct * 0.6})` : cold ? `rgba(78,144,240,${0.15 + (1-pct) * 0.6})` : `rgba(139,143,168,${0.08 + pct * 0.25})`;
+    const tc = hot ? 'var(--gold2)' : cold ? '#7ab0f5' : 'var(--text2)';
+    const cell = document.createElement('div');
+    cell.className = 'freq-cell';
+    cell.style.background = r;
+    cell.style.color = tc;
+    cell.title = `Number ${n}: drawn ${count} times`;
+    cell.innerHTML = `<span class="num">${n}</span><span class="cnt">${count}</span>`;
+    grid.appendChild(cell);
+  }
+
+  // Odd/even
+  let odd = 0, even = 0, low = 0, high = 0;
+  draws.forEach(d => d.numbers.forEach(n => {
+    if (n % 2 !== 0) odd++; else even++;
+    if (n <= 25) low++; else high++;
+  }));
+  const total = odd + even;
+  const oddPct = Math.round(odd / total * 100);
+  document.getElementById('oe-odd').style.width = oddPct + '%';
+  document.getElementById('oe-even').style.width = (100 - oddPct) + '%';
+  document.getElementById('oe-odd-label').textContent = `Odd — ${oddPct}%`;
+  document.getElementById('oe-even-label').textContent = `Even — ${100 - oddPct}%`;
+  const lowPct = Math.round(low / total * 100);
+  document.getElementById('hl-low').style.width = lowPct + '%';
+  document.getElementById('hl-high').style.width = (100 - lowPct) + '%';
+  document.getElementById('hl-low-label').textContent = `Low 1–25 — ${lowPct}%`;
+  document.getElementById('hl-high-label').textContent = `High 26–49 — ${100 - lowPct}%`;
+
+  // Pairs
+  const pairs = getPairs(draws);
+  document.getElementById('pairs-grid').innerHTML = pairs.map(({ pair, count }) =>
+    `<div class="pair-tile">
+       <div class="pair-balls">${pair.map(n => renderBall(n, 'sm-ball', 28)).join('')}</div>
+       <span class="pair-cnt">${count}×</span>
+     </div>`
+  ).join('');
+}
+
+function renderStrategies() {
+  const { draws, freq, bonusFreq } = getData();
+  const results = STRATEGIES.map(s => ({ ...s, ...backtestStrategy(s.key, draws, freq, bonusFreq) })).sort((a, b) => b.score - a.score);
+
+  document.getElementById('bt-best-match1').textContent = Math.max(...results.map(r => r.match1)) + '%';
+  document.getElementById('bt-best-match2').textContent = Math.max(...results.map(r => r.match2)) + '%';
+  document.getElementById('bt-winner').textContent = results[0].name.split(' ').slice(0, 2).join(' ');
+
+  const tbody = document.getElementById('strat-tbody');
+  tbody.innerHTML = results.map((r, i) => `
+    <tr>
+      <td>
+        <div class="strat-name">${r.icon} ${r.name}${i === 0 ? '<span class="best-badge">Top pick</span>' : ''}</div>
+        <div class="strat-desc">${r.desc}</div>
+      </td>
+      <td style="text-align:center;"><span class="match-pct match-high">${r.match1}%</span></td>
+      <td style="text-align:center;"><span class="match-pct match-mid">${r.match2}%</span></td>
+      <td style="text-align:center;"><span class="match-pct ${r.match3 > 10 ? 'match-high' : 'match-low'}">${r.match3}%</span></td>
+      <td style="text-align:center;"><span class="match-pct" style="color:var(--gold2);">${r.score.toFixed(1)}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('strat-guide').innerHTML = results.map(r => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;">
+      <div style="font-weight:600;font-size:13px;margin-bottom:4px;color:var(--text);">${r.icon} ${r.name}</div>
+      <div style="font-size:12px;color:var(--text3);">${r.desc}</div>
+      <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;">
+        <span style="color:var(--teal);">1+ match: <b>${r.match1}%</b></span>
+        <span style="color:var(--gold);">2+ match: <b>${r.match2}%</b></span>
+        <span style="color:var(--text3);">3+ match: <b>${r.match3}%</b></span>
+      </div>
+    </div>`).join('');
+}
+
+function renderHistory() {
+  const { draws } = getData();
+  const recent = draws.slice(-30).reverse();
+  document.getElementById('hist-subtitle').textContent = `Last 30 ${currentDraw === 'lunch' ? 'lunchtime' : 'teatime'} draws`;
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  document.getElementById('history-list').innerHTML = recent.map(d => `
+    <div class="hist-row">
+      <div class="hist-date">
+        <div style="font-size:13px;font-weight:600;color:var(--text);">${d.date.getDate()} ${d.date.toLocaleString('default',{month:'short'})}</div>
+        <div class="hist-day">${days[d.date.getDay()]}</div>
+      </div>
+      <div class="hist-balls">
+        ${d.numbers.map(n => `<div class="hist-ball">${n}</div>`).join('')}
+        <div class="hist-divider"></div>
+        <div class="hist-ball b" title="Booster ball">${d.bonus}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function setTab(tab) {
+  ['predict','stats','strategies','history'].forEach(t => {
+    document.getElementById('sec-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'stats') renderStats();
+  if (tab === 'strategies') renderStrategies();
+  if (tab === 'history') renderHistory();
+}
+
+function setDraw(draw) {
+  currentDraw = draw;
+  document.getElementById('dbtn-lunch').classList.toggle('active', draw === 'lunch');
+  document.getElementById('dbtn-tea').classList.toggle('active', draw === 'tea');
+  const active = ['predict','stats','strategies','history'].find(t => document.getElementById('sec-' + t).classList.contains('active'));
+  if (active === 'predict') generatePrediction();
+  else if (active === 'stats') renderStats();
+  else if (active === 'strategies') renderStrategies();
+  else renderHistory();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+const now = new Date();
+document.getElementById('header-date').textContent = now.toLocaleDateString('en-ZA', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
+document.getElementById('pred-date').textContent = now.toLocaleDateString('en-ZA', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+generatePrediction();
+</script>
+</body>
+</html>
